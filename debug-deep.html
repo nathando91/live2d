@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Debug - Motion Sync</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        .debug { background-color: #e2e3e5; color: #383d41; border: 1px solid #d6d8db; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 600px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+        }
+        .instructions {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .debug-steps {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .step {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #007bff;
+        }
+        .step h4 {
+            margin: 0 0 5px 0;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Deep Debug - Motion Sync Root Cause Analysis</h1>
+        
+        <div class="instructions">
+            <strong>Debug Steps:</strong>
+            <ol>
+                <li>Open the main app at <a href="http://localhost:5002" target="_blank">http://localhost:5002</a></li>
+                <li>Open browser console (F12)</li>
+                <li>Follow the debug steps below</li>
+                <li>Check console for detailed debug messages</li>
+                <li>Report any missing or error messages</li>
+            </ol>
+        </div>
+        
+        <div id="status" class="status info">
+            Ready for deep debugging...
+        </div>
+        
+        <div>
+            <button onclick="openMainApp()">Open Main App</button>
+            <button onclick="showDebugSteps()">Show Debug Steps</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div class="debug-steps">
+            <h3>Debug Steps to Follow:</h3>
+            
+            <div class="step">
+                <h4>Step 1: Model Loading</h4>
+                <p>Check if model loads successfully. Look for:</p>
+                <ul>
+                    <li>Model loading messages</li>
+                    <li>Texture loading messages</li>
+                    <li>Any CORS errors</li>
+                </ul>
+            </div>
+            
+            <div class="step">
+                <h4>Step 2: Initialize Motion Sync</h4>
+                <p>Click "Initialize Motion Sync" and look for:</p>
+                <ul>
+                    <li><code>[MOTION_SYNC] === INITIALIZATION START ===</code></li>
+                    <li><code>[MOTION_SYNC] Model: Valid</code></li>
+                    <li><code>[MOTION_SYNC] Creating Mock MotionSync...</code></li>
+                    <li><code>[MOTION_SYNC] === INITIALIZATION COMPLETE ===</code></li>
+                </ul>
+            </div>
+            
+            <div class="step">
+                <h4>Step 3: Start Motion Sync</h4>
+                <p>Click "Start Motion Sync" and look for:</p>
+                <ul>
+                    <li><code>[MOTION_SYNC] === START REQUEST ===</code></li>
+                    <li><code>[MOTION_SYNC] Microphone access granted</code></li>
+                    <li><code>[MOCK] === PLAY START ===</code></li>
+                    <li><code>[MOCK] Setting up vowel simulation interval...</code></li>
+                    <li><code>[MOCK] === PLAY COMPLETE ===</code></li>
+                </ul>
+            </div>
+            
+            <div class="step">
+                <h4>Step 4: Parameter Updates</h4>
+                <p>Every 500ms, look for:</p>
+                <ul>
+                    <li><code>[MOCK] === INTERVAL CALLBACK ===</code></li>
+                    <li><code>[MOCK] Processing vowel: A/I/U/E/O</code></li>
+                    <li><code>[MOTION_SYNC] Set ParamMouthOpenY: 1.00</code></li>
+                    <li><code>[MOTION_SYNC] Set ParamA: 1.00</code> (or other vowels)</li>
+                </ul>
+            </div>
+            
+            <div class="step">
+                <h4>Step 5: Visual Check</h4>
+                <p>Check if character's mouth moves:</p>
+                <ul>
+                    <li>Mouth should open/close every 500ms</li>
+                    <li>Different mouth shapes for different vowels</li>
+                    <li>If no visual change, parameters not being applied</li>
+                </ul>
+            </div>
+        </div>
+        
+        <h3>Debug Log:</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : type === 'debug' ? '#6c757d' : '#007bff';
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function openMainApp() {
+            window.open('http://localhost:5002', '_blank');
+            log('Opened main app in new tab', 'info');
+            updateStatus('Main app opened - follow debug steps', 'info');
+        }
+
+        function showDebugSteps() {
+            log('=== DEBUG STEPS SUMMARY ===', 'debug');
+            log('1. Check model loading (CORS, textures)', 'debug');
+            log('2. Initialize Motion Sync - look for [MOTION_SYNC] messages', 'debug');
+            log('3. Start Motion Sync - look for [MOCK] messages', 'debug');
+            log('4. Check interval callbacks every 500ms', 'debug');
+            log('5. Verify parameter setting messages', 'debug');
+            log('6. Check visual mouth movement', 'debug');
+            log('=== END DEBUG STEPS ===', 'debug');
+        }
+
+        // Auto-run instructions on page load
+        window.addEventListener('load', () => {
+            log('Page loaded. Ready for deep debugging.', 'info');
+            log('Follow the debug steps above to identify the root cause.', 'warning');
+            log('Report any missing or error messages in the console.', 'warning');
+        });
+    </script>
+</body>
+</html> 

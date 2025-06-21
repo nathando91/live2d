@@ -44,6 +44,7 @@ import { LAppWavFileHandler } from './lappwavfilehandler';
 import { CubismMoc } from '@framework/model/cubismmoc';
 import { LAppDelegate } from './lappdelegate';
 import { LAppSubdelegate } from './lappsubdelegate';
+import { LAppMotionSync } from './lappmotionsync';
 
 enum LoadStep {
   LoadAssets,
@@ -101,6 +102,43 @@ export class LAppModel extends CubismUserModel {
       .catch(error => {
         // model3.json読み込みでエラーが発生した時点で描画は不可能なので、setupせずエラーをcatchして何もしない
         CubismLogError(`Failed to load file ${this._modelHomeDir}${fileName}`);
+      });
+  }
+
+  /**
+   * Load model from URL
+   * @param modelUrl URL to model3.json file
+   */
+  public loadAssetsFromUrl(modelUrl: string): void {
+    this._modelHomeDir = modelUrl.substring(0, modelUrl.lastIndexOf('/') + 1);
+
+    fetch(modelUrl)
+      .then(response => response.arrayBuffer())
+      .then(arrayBuffer => {
+        const setting: ICubismModelSetting = new CubismModelSettingJson(
+          arrayBuffer,
+          arrayBuffer.byteLength
+        );
+
+        // ステートを更新
+        this._state = LoadStep.LoadModel;
+
+        // 結果を保存
+        this.setupModel(setting);
+      })
+      .catch(error => {
+        CubismLogError(`Failed to load model from URL: ${modelUrl}`);
+
+        // Fallback to local model if CORS fails
+        if (LAppDefine.UseLocalFallback) {
+          CubismLogInfo(
+            `Falling back to local model: ${LAppDefine.LocalModelDir}`
+          );
+          this.loadAssets(
+            `${LAppDefine.ResourcesPath}${LAppDefine.LocalModelDir}/`,
+            `${LAppDefine.LocalModelDir}.model3.json`
+          );
+        }
       });
   }
 
@@ -567,7 +605,8 @@ export class LAppModel extends CubismUserModel {
     }
 
     // リップシンクの設定
-    if (this._lipsync) {
+    if (this._lipsync && !this.isMotionSyncPlaying()) {
+      // Only use default lip sync if motion sync is not active
       let value = 0.0; // リアルタイムでリップシンクを行う場合、システムから音量を取得して、0~1の範囲で値を入力します。
 
       this._wavFileHandler.update(deltaTimeSeconds);
@@ -855,6 +894,61 @@ export class LAppModel extends CubismUserModel {
   }
 
   /**
+   * Initialize motion sync with the model
+   * @param motionSyncUrl URL to motion sync data file
+   */
+  public async initializeMotionSync(motionSyncUrl: string): Promise<boolean> {
+    if (this._model == null) {
+      LAppPal.printMessage('[MOTION_SYNC] Model is null');
+      return false;
+    }
+
+    if (this._state !== LoadStep.CompleteSetup) {
+      LAppPal.printMessage(
+        `[MOTION_SYNC] Model not ready, state: ${this._state}`
+      );
+      return false;
+    }
+
+    // Try using getModel() instead of _model
+    const cubismModel = this.getModel();
+    if (!cubismModel) {
+      LAppPal.printMessage('[MOTION_SYNC] getModel() returned null');
+      return false;
+    }
+
+    return await this._motionSync.initialize(cubismModel, motionSyncUrl);
+  }
+
+  /**
+   * Start motion sync
+   */
+  public async startMotionSync(): Promise<boolean> {
+    return await this._motionSync.start();
+  }
+
+  /**
+   * Stop motion sync
+   */
+  public stopMotionSync(): void {
+    this._motionSync.stop();
+  }
+
+  /**
+   * Check if motion sync is playing
+   */
+  public isMotionSyncPlaying(): boolean {
+    return this._motionSync.isPlaying();
+  }
+
+  /**
+   * Check if motion sync is initialized
+   */
+  public isMotionSyncInitialized(): boolean {
+    return this._motionSync.isInitialized();
+  }
+
+  /**
    * すべてのモーションデータを解放する。
    */
   public releaseMotions(): void {
@@ -866,6 +960,22 @@ export class LAppModel extends CubismUserModel {
    */
   public releaseExpressions(): void {
     this._expressions.clear();
+  }
+
+  /**
+   * Release motion sync resources
+   */
+  public releaseMotionSync(): void {
+    this._motionSync.release();
+  }
+
+  /**
+   * Release all resources
+   */
+  public release(): void {
+    this.releaseMotionSync();
+    this.releaseMotions();
+    this.releaseExpressions();
   }
 
   /**
@@ -984,6 +1094,7 @@ export class LAppModel extends CubismUserModel {
     this._allMotionCount = 0;
     this._wavFileHandler = new LAppWavFileHandler();
     this._consistency = false;
+    this._motionSync = new LAppMotionSync();
   }
 
   private _subdelegate: LAppSubdelegate;
@@ -1015,4 +1126,125 @@ export class LAppModel extends CubismUserModel {
   _allMotionCount: number; // モーション総数
   _wavFileHandler: LAppWavFileHandler; //wavファイルハンドラ
   _consistency: boolean; // MOC3整合性チェック管理用
+  _motionSync: LAppMotionSync; // Motion sync manager
+
+  /**
+   * Test parameter setting for debugging
+   */
+  public testParameterSetting(): void {
+    console.log(`[TEST] === DEEP PARAMETER ANALYSIS ===`);
+    console.log(`[TEST] Model: ${this._model ? 'Valid' : 'Null'}`);
+
+    if (!this._model) {
+      console.log(`[TEST] ❌ Model is null`);
+      return;
+    }
+
+    try {
+      // Test 1: Get parameter count
+      const paramCount = this._model.getParameterCount();
+      console.log(`[TEST] Model has ${paramCount} parameters total`);
+
+      if (paramCount === 0) {
+        console.log(`[TEST] ❌ Model has no parameters!`);
+        return;
+      }
+
+      // Test 2: List ALL parameters to see what's available
+      console.log(`[TEST] === LISTING ALL PARAMETERS ===`);
+
+      for (let i = 0; i < Math.min(paramCount, 50); i++) {
+        // Show up to 50 parameters
+        try {
+          const paramId = this._model.getParameterId(i);
+          const paramValue = this._model.getParameterValueByIndex(i);
+          const paramMin = this._model.getParameterMinimumValue(i);
+          const paramMax = this._model.getParameterMaximumValue(i);
+          const paramDefault = this._model.getParameterDefaultValue(i);
+
+          console.log(
+            `[TEST] Param[${i}]: Value=${paramValue.toFixed(3)}, ` +
+            `Min=${paramMin.toFixed(1)}, Max=${paramMax.toFixed(1)}, ` +
+            `Default=${paramDefault.toFixed(1)}`
+          );
+
+          // Try to get parameter name if possible
+          try {
+            // Try different ways to get parameter name
+            console.log(`[TEST]   ID String: "${paramId}"`);
+          } catch (e) {
+            console.log(`[TEST]   ID String: Could not convert to string`);
+          }
+        } catch (error: unknown) {
+          console.log(`[TEST] Error with parameter ${i}: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      }
+
+      // Test 3: Test parameter setting on first few parameters
+      console.log(`[TEST] === TESTING PARAMETER SETTING ===`);
+
+      for (let i = 0; i < Math.min(5, paramCount); i++) {
+        try {
+          const paramId = this._model.getParameterId(i);
+          const oldValue = this._model.getParameterValueById(paramId);
+
+          console.log(`[TEST] Testing parameter ${i}...`);
+          console.log(`[TEST]   Original value: ${oldValue.toFixed(3)}`);
+
+          // Try setting to different values
+          this._model.setParameterValueById(paramId, 1.0);
+          const newValue1 = this._model.getParameterValueById(paramId);
+          console.log(`[TEST]   After setting to 1.0: ${newValue1.toFixed(3)}`);
+
+          this._model.setParameterValueById(paramId, 0.0);
+          const newValue2 = this._model.getParameterValueById(paramId);
+          console.log(`[TEST]   After setting to 0.0: ${newValue2.toFixed(3)}`);
+
+          this._model.setParameterValueById(paramId, -1.0);
+          const newValue3 = this._model.getParameterValueById(paramId);
+          console.log(`[TEST]   After setting to -1.0: ${newValue3.toFixed(3)}`);
+
+          // Reset to original
+          this._model.setParameterValueById(paramId, oldValue);
+          const resetValue = this._model.getParameterValueById(paramId);
+          console.log(`[TEST]   Reset to original: ${resetValue.toFixed(3)}`);
+
+          // Check if parameter actually changes
+          if (Math.abs(newValue1 - oldValue) > 0.01 || Math.abs(newValue2 - oldValue) > 0.01) {
+            console.log(`[TEST] ✅ Parameter ${i} CAN BE CHANGED!`);
+            console.log(`[TEST] 🎯 Let's try to make this parameter move the mouth...`);
+
+            // Try extreme values to see if it affects the mouth
+            this._model.setParameterValueById(paramId, 1.0);
+            console.log(`[TEST] 🔥 PARAMETER ${i} SET TO 1.0 - CHECK IF MOUTH MOVES!`);
+
+            setTimeout(() => {
+              this._model.setParameterValueById(paramId, -1.0);
+              console.log(`[TEST] 🔥 PARAMETER ${i} SET TO -1.0 - CHECK IF MOUTH MOVES!`);
+
+              setTimeout(() => {
+                this._model.setParameterValueById(paramId, oldValue);
+                console.log(`[TEST] Parameter ${i} reset to original`);
+              }, 1000);
+            }, 1000);
+
+            // Only test first working parameter
+            return;
+          } else {
+            console.log(`[TEST] ❌ Parameter ${i} cannot be changed (value stays same)`);
+          }
+
+        } catch (error) {
+          console.log(`[TEST] Error testing parameter ${i}: ${error}`);
+        }
+      }
+
+      console.log(`[TEST] ❌ No changeable parameters found in first 5 parameters`);
+      console.log(`[TEST] This suggests model parameters might be locked or overridden`);
+
+    } catch (error) {
+      console.log(`[TEST] ❌ General error: ${error}`);
+      console.error(error);
+    }
+  }
 }

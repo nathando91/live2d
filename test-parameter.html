@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parameter Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .instructions {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Parameter Setting Test</h1>
+        
+        <div class="instructions">
+            <strong>Test Steps:</strong>
+            <ol>
+                <li>Open the main app at <a href="http://localhost:5002" target="_blank">http://localhost:5002</a></li>
+                <li>Wait for the model to load completely</li>
+                <li>Click "Test Parameter Setting" button in the Motion Sync Controls</li>
+                <li>Check the browser console for test messages</li>
+                <li>Look for messages starting with [TEST]</li>
+            </ol>
+        </div>
+        
+        <div id="status" class="status info">
+            Ready to test parameter setting...
+        </div>
+        
+        <div>
+            <button onclick="openMainApp()">Open Main App</button>
+            <button onclick="simulateTest()">Simulate Test Messages</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <h3>Expected Test Messages:</h3>
+        <div class="log">
+            <strong>Look for these messages in console:</strong><br><br>
+            • [TEST] Model has X parameters<br>
+            • [TEST] Testing parameter ID: ...<br>
+            • [TEST] Current value: 0.XX<br>
+            • [TEST] New value: 0.50<br>
+            • [TEST] Parameter setting works!<br>
+            • [TEST] Parameter setting failed!<br>
+        </div>
+        
+        <h3>Test Log:</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : '#007bff';
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function openMainApp() {
+            window.open('http://localhost:5002', '_blank');
+            log('Opened main app in new tab', 'info');
+            updateStatus('Main app opened - click "Test Parameter Setting" button', 'info');
+        }
+
+        function simulateTest() {
+            log('Simulating parameter test messages...', 'info');
+            
+            const messages = [
+                '[TEST] Model has 50 parameters',
+                '[TEST] Testing parameter ID: 12345',
+                '[TEST] Current value: 0.00',
+                '[TEST] New value: 0.50',
+                '[TEST] Parameter setting works!'
+            ];
+            
+            let index = 0;
+            const interval = setInterval(() => {
+                if (index < messages.length) {
+                    const message = messages[index];
+                    const type = message.includes('works!') ? 'success' : 'info';
+                    log(message, type);
+                    index++;
+                } else {
+                    clearInterval(interval);
+                    log('✅ Parameter test simulation completed', 'success');
+                    updateStatus('Parameter test simulation completed', 'success');
+                }
+            }, 500);
+        }
+
+        // Auto-run instructions on page load
+        window.addEventListener('load', () => {
+            log('Page loaded. Ready to test parameter setting.', 'info');
+            log('Open the main app and click "Test Parameter Setting" button.', 'info');
+            log('Check console for [TEST] messages to verify parameter setting works.', 'warning');
+        });
+    </script>
+</body>
+</html> 

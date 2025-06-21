@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Model Parameters</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 11px;
+            white-space: pre-wrap;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Model Parameters</h1>
+        
+        <div id="status" class="status info">
+            Ready to test model parameters...
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 1: Basic Parameter Setting</h3>
+            <p>This test will try to set basic parameters on the model to see if they work.</p>
+            <button onclick="testBasicParams()">Test Basic Parameters</button>
+            <button onclick="testMouthParams()">Test Mouth Parameters</button>
+            <button onclick="testVowelParams()">Test Vowel Parameters</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 2: Parameter Discovery</h3>
+            <p>This test will try to discover what parameters are available in the model.</p>
+            <button onclick="discoverParams()">Discover Parameters</button>
+            <button onclick="listAllParams()">List All Parameters</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>Test 3: Real-time Parameter Updates</h3>
+            <p>This test will continuously update parameters to see if they affect the model.</p>
+            <button onclick="startRealTimeTest()">Start Real-time Test</button>
+            <button onclick="stopRealTimeTest()">Stop Real-time Test</button>
+        </div>
+        
+        <h3>Test Log:</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        let realTimeInterval = null;
+        
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : '#007bff';
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function testBasicParams() {
+            log('=== TESTING BASIC PARAMETERS ===', 'info');
+            
+            // Try to access the global model instance
+            if (typeof LAppDelegate !== 'undefined' && LAppDelegate.getInstance()) {
+                const delegate = LAppDelegate.getInstance();
+                const view = delegate.getView();
+                
+                if (view && view.getModel()) {
+                    const model = view.getModel();
+                    log(`Model found: ${model ? 'Yes' : 'No'}`, 'success');
+                    
+                    // Test basic parameter setting
+                    try {
+                        // Try to set a basic parameter
+                        if (typeof model.setParameterValueById === 'function') {
+                            log('setParameterValueById method exists', 'success');
+                            
+                            // Try to get parameter IDs
+                            if (typeof model.getParameterId === 'function') {
+                                log('getParameterId method exists', 'success');
+                                
+                                // Try to set a parameter
+                                const paramId = model.getParameterId('ParamMouthOpenY');
+                                if (paramId) {
+                                    log(`Found ParamMouthOpenY with ID: ${paramId}`, 'success');
+                                    model.setParameterValueById(paramId, 1.0);
+                                    log('Set ParamMouthOpenY to 1.0', 'success');
+                                } else {
+                                    log('ParamMouthOpenY not found', 'warning');
+                                }
+                            } else {
+                                log('getParameterId method not found', 'error');
+                            }
+                        } else {
+                            log('setParameterValueById method not found', 'error');
+                        }
+                    } catch (error) {
+                        log(`Error setting parameter: ${error}`, 'error');
+                    }
+                } else {
+                    log('No model found in view', 'error');
+                }
+            } else {
+                log('LAppDelegate not found or not initialized', 'error');
+            }
+        }
+
+        function testMouthParams() {
+            log('=== TESTING MOUTH PARAMETERS ===', 'info');
+            
+            const mouthParams = [
+                'ParamMouthOpenY',
+                'ParamMouthForm',
+                'ParamMouthOpen',
+                'ParamMouthA',
+                'ParamMouthI',
+                'ParamMouthU',
+                'ParamMouthE',
+                'ParamMouthO'
+            ];
+            
+            if (typeof LAppDelegate !== 'undefined' && LAppDelegate.getInstance()) {
+                const delegate = LAppDelegate.getInstance();
+                const view = delegate.getView();
+                
+                if (view && view.getModel()) {
+                    const model = view.getModel();
+                    
+                    mouthParams.forEach(paramName => {
+                        try {
+                            const paramId = model.getParameterId(paramName);
+                            if (paramId) {
+                                log(`Found ${paramName}: ${paramId}`, 'success');
+                                model.setParameterValueById(paramId, 1.0);
+                                log(`Set ${paramName} to 1.0`, 'success');
+                            } else {
+                                log(`${paramName} not found`, 'warning');
+                            }
+                        } catch (error) {
+                            log(`Error with ${paramName}: ${error}`, 'error');
+                        }
+                    });
+                }
+            }
+        }
+
+        function testVowelParams() {
+            log('=== TESTING VOWEL PARAMETERS ===', 'info');
+            
+            const vowelParams = [
+                'ParamA',
+                'ParamI', 
+                'ParamU',
+                'ParamE',
+                'ParamO'
+            ];
+            
+            if (typeof LAppDelegate !== 'undefined' && LAppDelegate.getInstance()) {
+                const delegate = LAppDelegate.getInstance();
+                const view = delegate.getView();
+                
+                if (view && view.getModel()) {
+                    const model = view.getModel();
+                    
+                    vowelParams.forEach(paramName => {
+                        try {
+                            const paramId = model.getParameterId(paramName);
+                            if (paramId) {
+                                log(`Found ${paramName}: ${paramId}`, 'success');
+                                model.setParameterValueById(paramId, 1.0);
+                                log(`Set ${paramName} to 1.0`, 'success');
+                            } else {
+                                log(`${paramName} not found`, 'warning');
+                            }
+                        } catch (error) {
+                            log(`Error with ${paramName}: ${error}`, 'error');
+                        }
+                    });
+                }
+            }
+        }
+
+        function discoverParams() {
+            log('=== DISCOVERING PARAMETERS ===', 'info');
+            
+            if (typeof LAppDelegate !== 'undefined' && LAppDelegate.getInstance()) {
+                const delegate = LAppDelegate.getInstance();
+                const view = delegate.getView();
+                
+                if (view && view.getModel()) {
+                    const model = view.getModel();
+                    
+                    try {
+                        if (typeof model.getParameterCount === 'function') {
+                            const count = model.getParameterCount();
+                            log(`Total parameters: ${count}`, 'success');
+                            
+                            // Try to get parameter names
+                            for (let i = 0; i < Math.min(count, 20); i++) {
+                                try {
+                                    const paramId = model.getParameterIdByIndex(i);
+                                    const paramName = model.getParameterNameByIndex(i);
+                                    log(`Parameter ${i}: ${paramName} (${paramId})`, 'info');
+                                } catch (error) {
+                                    log(`Error getting parameter ${i}: ${error}`, 'error');
+                                }
+                            }
+                        } else {
+                            log('getParameterCount method not found', 'error');
+                        }
+                    } catch (error) {
+                        log(`Error discovering parameters: ${error}`, 'error');
+                    }
+                }
+            }
+        }
+
+        function listAllParams() {
+            log('=== LISTING ALL PARAMETERS ===', 'info');
+            
+            if (typeof LAppDelegate !== 'undefined' && LAppDelegate.getInstance()) {
+                const delegate = LAppDelegate.getInstance();
+                const view = delegate.getView();
+                
+                if (view && view.getModel()) {
+                    const model = view.getModel();
+                    
+                    try {
+                        if (typeof model.getParameterCount === 'function') {
+                            const count = model.getParameterCount();
+                            log(`Total parameters: ${count}`, 'success');
+                            
+                            // List all parameters
+                            for (let i = 0; i < count; i++) {
+                                try {
+                                    const paramId = model.getParameterIdByIndex(i);
+                                    const paramName = model.getParameterNameByIndex(i);
+                                    const paramValue = model.getParameterValueByIndex(i);
+                                    log(`[${i}] ${paramName} = ${paramValue} (ID: ${paramId})`, 'info');
+                                } catch (error) {
+                                    log(`Error getting parameter ${i}: ${error}`, 'error');
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        log(`Error listing parameters: ${error}`, 'error');
+                    }
+                }
+            }
+        }
+
+        function startRealTimeTest() {
+            log('=== STARTING REAL-TIME TEST ===', 'info');
+            
+            if (realTimeInterval) {
+                clearInterval(realTimeInterval);
+            }
+            
+            let counter = 0;
+            realTimeInterval = setInterval(() => {
+                counter++;
+                log(`Real-time test iteration ${counter}`, 'info');
+                
+                if (typeof LAppDelegate !== 'undefined' && LAppDelegate.getInstance()) {
+                    const delegate = LAppDelegate.getInstance();
+                    const view = delegate.getView();
+                    
+                    if (view && view.getModel()) {
+                        const model = view.getModel();
+                        
+                        try {
+                            // Cycle through mouth parameters
+                            const mouthParams = ['ParamMouthOpenY', 'ParamA', 'ParamI', 'ParamU', 'ParamE', 'ParamO'];
+                            const paramIndex = counter % mouthParams.length;
+                            const paramName = mouthParams[paramIndex];
+                            
+                            const paramId = model.getParameterId(paramName);
+                            if (paramId) {
+                                const value = Math.sin(counter * 0.1) * 0.5 + 0.5; // Oscillate between 0 and 1
+                                model.setParameterValueById(paramId, value);
+                                log(`Set ${paramName} to ${value.toFixed(2)}`, 'success');
+                            }
+                        } catch (error) {
+                            log(`Error in real-time test: ${error}`, 'error');
+                        }
+                    }
+                }
+            }, 1000); // Update every second
+            
+            log('Real-time test started - updating parameters every second', 'success');
+        }
+
+        function stopRealTimeTest() {
+            if (realTimeInterval) {
+                clearInterval(realTimeInterval);
+                realTimeInterval = null;
+                log('Real-time test stopped', 'info');
+            }
+        }
+
+        // Auto-run basic test on page load
+        window.addEventListener('load', () => {
+            log('Page loaded. Ready to test model parameters.', 'info');
+            log('Make sure the main app is running and a model is loaded.', 'warning');
+        });
+    </script>
+</body>
+</html> 

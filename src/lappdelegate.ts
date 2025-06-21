@@ -11,6 +11,7 @@ import * as LAppDefine from './lappdefine';
 import { LAppPal } from './lapppal';
 import { LAppSubdelegate } from './lappsubdelegate';
 import { CubismLogError } from '@framework/utils/cubismdebug';
+import { LAppMotionSyncUI } from './motionsyncui';
 
 export let s_instance: LAppDelegate = null;
 
@@ -123,6 +124,9 @@ export class LAppDelegate {
         this._subdelegates.at(i).update();
       }
 
+      // Update motion sync UI
+      this._motionSyncUI.updateUI();
+
       // ループのために再帰呼び出し
       requestAnimationFrame(loop);
     };
@@ -181,6 +185,12 @@ export class LAppDelegate {
 
     this.initializeSubdelegates();
     this.initializeEventListener();
+
+    // Initialize motion sync UI after subdelegates are created
+    if (this._subdelegates.getSize() > 0) {
+      const live2DManager = this._subdelegates.at(0).getLive2DManager();
+      this._motionSyncUI.initialize(live2DManager);
+    }
 
     return true;
   }
@@ -273,6 +283,7 @@ export class LAppDelegate {
     this._cubismOption = new Option();
     this._subdelegates = new csmVector<LAppSubdelegate>();
     this._canvases = new csmVector<HTMLCanvasElement>();
+    this._motionSyncUI = new LAppMotionSyncUI();
   }
 
   /**
@@ -309,4 +320,9 @@ export class LAppDelegate {
    * 登録済みイベントリスナー 関数オブジェクト
    */
   private pointCancelEventListener: (this: Document, ev: PointerEvent) => void;
+
+  /**
+   * Motion Sync UI
+   */
+  private _motionSyncUI: LAppMotionSyncUI;
 }

@@ -1,7 +1,8 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "moduleResolution": "node",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
@@ -10,10 +11,13 @@
     "sourceMap": true,
     "baseUrl": "./",
     "paths": {
-      "@framework/*": ["../../../Framework/src/*"]
+      "@framework/*": [
+        "../../../Framework/src/*"
+      ]
     },
     "noImplicitAny": true,
-    "useUnknownInCatchVariables": true
+    "useUnknownInCatchVariables": true,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*.ts",

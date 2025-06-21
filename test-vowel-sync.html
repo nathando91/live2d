@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vowel Sync Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeaa7; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .instructions {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .vowel-info {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+        .vowel-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 10px 0;
+        }
+        .vowel-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            text-align: center;
+            border: 2px solid #dee2e6;
+        }
+        .vowel-item.active {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vowel Sync Test - kei_vowels_pro</h1>
+        
+        <div class="instructions">
+            <strong>Test Steps:</strong>
+            <ol>
+                <li>Open the main app at <a href="http://localhost:5002" target="_blank">http://localhost:5002</a></li>
+                <li>Wait for kei_vowels_pro model to load completely</li>
+                <li>Click "Initialize Motion Sync"</li>
+                <li>Click "Start Motion Sync"</li>
+                <li>Watch the character's mouth cycle through vowels: A → I → U → E → O</li>
+                <li>Check the browser console for parameter updates</li>
+            </ol>
+        </div>
+        
+        <div id="status" class="status info">
+            Ready to test vowel sync with kei_vowels_pro model...
+        </div>
+        
+        <div>
+            <button onclick="openMainApp()">Open Main App</button>
+            <button onclick="simulateVowelSync()">Simulate Vowel Sync</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div class="vowel-info">
+            <h3>Expected Vowel Parameters (from Motion Sync Data):</h3>
+            <div class="vowel-grid">
+                <div class="vowel-item" id="vowel-A">
+                    <strong>A</strong><br>
+                    ParamMouthOpenY: 1.0<br>
+                    ParamA: 1.0<br>
+                    Others: 0.0
+                </div>
+                <div class="vowel-item" id="vowel-I">
+                    <strong>I</strong><br>
+                    ParamMouthOpenY: 1.0<br>
+                    ParamI: 1.0<br>
+                    Others: 0.0
+                </div>
+                <div class="vowel-item" id="vowel-U">
+                    <strong>U</strong><br>
+                    ParamMouthOpenY: 1.0<br>
+                    ParamU: 1.0<br>
+                    Others: 0.0
+                </div>
+                <div class="vowel-item" id="vowel-E">
+                    <strong>E</strong><br>
+                    ParamMouthOpenY: 1.0<br>
+                    ParamE: 1.0<br>
+                    Others: 0.0
+                </div>
+                <div class="vowel-item" id="vowel-O">
+                    <strong>O</strong><br>
+                    ParamMouthOpenY: 1.0<br>
+                    ParamO: 1.0<br>
+                    Others: 0.0
+                </div>
+            </div>
+        </div>
+        
+        <h3>Test Log:</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : '#007bff';
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function openMainApp() {
+            window.open('http://localhost:5002', '_blank');
+            log('Opened main app in new tab', 'info');
+            updateStatus('Main app opened - test vowel sync', 'info');
+        }
+
+        function simulateVowelSync() {
+            log('Simulating vowel sync...', 'info');
+            updateStatus('Simulating vowel sync...', 'info');
+            
+            const vowels = ['A', 'I', 'U', 'E', 'O'];
+            let index = 0;
+            
+            // Clear previous active states
+            vowels.forEach(vowel => {
+                document.getElementById(`vowel-${vowel}`).classList.remove('active');
+            });
+            
+            const interval = setInterval(() => {
+                const currentVowel = vowels[index];
+                
+                // Update visual indicator
+                vowels.forEach(vowel => {
+                    document.getElementById(`vowel-${vowel}`).classList.remove('active');
+                });
+                document.getElementById(`vowel-${currentVowel}`).classList.add('active');
+                
+                // Log the vowel change
+                log(`🎭 Simulating vowel: ${currentVowel}`, 'success');
+                log(`   Set ParamMouthOpenY: 1.0`, 'info');
+                log(`   Set Param${currentVowel}: 1.0`, 'info');
+                log(`   Set other vowels: 0.0`, 'info');
+                
+                index++;
+                if (index >= vowels.length) {
+                    clearInterval(interval);
+                    log('✅ Vowel sync simulation completed', 'success');
+                    updateStatus('Vowel sync simulation completed', 'success');
+                    
+                    // Clear active state
+                    vowels.forEach(vowel => {
+                        document.getElementById(`vowel-${vowel}`).classList.remove('active');
+                    });
+                }
+            }, 1000);
+        }
+
+        // Auto-run instructions on page load
+        window.addEventListener('load', () => {
+            log('Page loaded. Ready to test vowel sync with kei_vowels_pro.', 'info');
+            log('The mock will cycle through vowels A → I → U → E → O every 500ms.', 'info');
+            log('Each vowel should set specific parameters according to motion sync data.', 'warning');
+        });
+    </script>
+</body>
+</html> 

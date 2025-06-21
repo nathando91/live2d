@@ -3,11 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TypeScript HTML App</title>
+  <title>Live2D Cubism SDK Demo with Motion Sync</title>
   <style>
     html, body {
       overflow: hidden;
       margin: 0;
+      font-family: Arial, sans-serif;
     }
     html {
       overscroll-behavior-x: none;
@@ -15,11 +16,96 @@
     }
     body {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
+      height: 100vh;
     }
+    
+    .controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 15px;
+      border-radius: 8px;
+      color: white;
+    }
+    
+    .controls h3 {
+      margin: 0 0 10px 0;
+      font-size: 16px;
+    }
+    
+    .controls button {
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    
+    .controls button:hover {
+      opacity: 0.8;
+    }
+    
+    .btn-start {
+      background: #4CAF50;
+      color: white;
+    }
+    
+    .btn-stop {
+      background: #f44336;
+      color: white;
+    }
+    
+    .btn-init {
+      background: #2196F3;
+      color: white;
+    }
+    
+    .btn-disabled {
+      background: #ccc;
+      color: #666;
+      cursor: not-allowed;
+    }
+    
+    .status {
+      margin-top: 10px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      position: relative;
+    }
+    
     body > canvas:only-child {
       width: 100vw;
       height: 100vh;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .controls {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        padding: 10px;
+      }
+      
+      .controls h3 {
+        font-size: 14px;
+      }
+      
+      .controls button {
+        font-size: 12px;
+        padding: 6px 8px;
+      }
     }
   </style>
   <!-- Live2DCubismCore script -->
@@ -28,5 +114,16 @@
   <script src = "./src/main.ts" type="module"></script>
 </head>
 <body>
+  <div class="controls">
+    <h3>Motion Sync Controls</h3>
+    <button id="initMotionSync" class="btn-init">Initialize Motion Sync</button>
+    <button id="startMotionSync" class="btn-start btn-disabled">Start Motion Sync</button>
+    <button id="stopMotionSync" class="btn-stop btn-disabled">Stop Motion Sync</button>
+    <div class="status" id="status">Ready to initialize</div>
+  </div>
+  
+  <div class="canvas-container" id="canvas-container">
+    <!-- Canvas will be created here by the Live2D SDK -->
+  </div>
 </body>
 </html>

@@ -35,6 +35,20 @@ export const ViewLogicalMaxTop = 2.0;
 // 相対パス
 export const ResourcesPath = '../../Resources/';
 
+// Model URLs for kei_vowels_pro
+export const ModelUrl = 'https://cdn.jsdelivr.net/gh/liyao1520/live2d-motionSync/examples/public/models/kei_vowels_pro/kei_vowels_pro.model3.json';
+export const MotionSyncUrl = 'https://cdn.jsdelivr.net/gh/liyao1520/live2d-motionSync/examples/public/models/kei_vowels_pro/kei_vowels_pro.motionsync3.json';
+
+// Use remote model instead of local models
+export const UseRemoteModel = true;
+
+// CORS handling options
+export const EnableCORS = true;
+export const UseLocalFallback = true; // Fallback to local model if CORS fails
+
+// Local model fallback (if CORS fails)
+export const LocalModelDir = 'Haru'; // Use Haru as local fallback
+
 // モデルの後ろにある背景の画像ファイル
 export const BackImageName = 'back_class_normal.png';
 

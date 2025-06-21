@@ -23,6 +23,12 @@ export class LAppLive2DManager {
    * 現在のシーンで保持しているすべてのモデルを解放する
    */
   private releaseAllModel(): void {
+    for (let i = 0; i < this._models.getSize(); i++) {
+      const model = this._models.at(i);
+      if (model) {
+        model.release();
+      }
+    }
     this._models.clear();
   }
 
@@ -122,18 +128,25 @@ export class LAppLive2DManager {
       LAppPal.printMessage(`[APP]model index: ${this._sceneIndex}`);
     }
 
-    // ModelDir[]に保持したディレクトリ名から
-    // model3.jsonのパスを決定する。
-    // ディレクトリ名とmodel3.jsonの名前を一致させておくこと。
-    const model: string = LAppDefine.ModelDir[index];
-    const modelPath: string = LAppDefine.ResourcesPath + model + '/';
-    let modelJsonName: string = LAppDefine.ModelDir[index];
-    modelJsonName += '.model3.json';
-
     this.releaseAllModel();
     const instance = new LAppModel();
     instance.setSubdelegate(this._subdelegate);
-    instance.loadAssets(modelPath, modelJsonName);
+
+    // Use remote model if enabled
+    if (LAppDefine.UseRemoteModel) {
+      instance.loadAssetsFromUrl(LAppDefine.ModelUrl);
+    } else {
+      // ModelDir[]に保持したディレクトリ名から
+      // model3.jsonのパスを決定する。
+      // ディレクトリ名とmodel3.jsonの名前を一致させておくこと。
+      const model: string = LAppDefine.ModelDir[index];
+      const modelPath: string = LAppDefine.ResourcesPath + model + '/';
+      let modelJsonName: string = LAppDefine.ModelDir[index];
+      modelJsonName += '.model3.json';
+
+      instance.loadAssets(modelPath, modelJsonName);
+    }
+
     this._models.pushBack(instance);
   }
 
@@ -164,7 +177,7 @@ export class LAppLive2DManager {
   /**
    * 解放する。
    */
-  public release(): void {}
+  public release(): void { }
 
   /**
    * 初期化する。

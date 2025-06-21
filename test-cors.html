@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test - Live2D Motion Sync</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CORS Test - Live2D Motion Sync</h1>
+        
+        <div id="status" class="status info">
+            Ready to test CORS functionality...
+        </div>
+        
+        <div>
+            <button onclick="testModelLoading()">Test Model Loading</button>
+            <button onclick="testTextureLoading()">Test Texture Loading</button>
+            <button onclick="testMotionSyncLoading()">Test Motion Sync Loading</button>
+            <button onclick="testMicrophoneAccess()">Test Microphone Access</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <h3>Test Log:</h3>
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logEntry.style.color = type === 'error' ? '#dc3545' : type === 'success' ? '#28a745' : '#007bff';
+            logDiv.appendChild(logEntry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function testModelLoading() {
+            log('Testing model loading from CDN...', 'info');
+            updateStatus('Testing model loading...', 'info');
+            
+            try {
+                const modelUrl = 'https://cdn.jsdelivr.net/gh/liyao1520/live2d-motionSync/examples/public/models/kei_vowels_pro/kei_vowels_pro.model3.json';
+                const response = await fetch(modelUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Model loaded successfully! Model name: ${data.FileReferences.Moc}`, 'success');
+                    updateStatus('Model loading: SUCCESS', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                log(`❌ Model loading failed: ${error.message}`, 'error');
+                updateStatus('Model loading: FAILED', 'error');
+            }
+        }
+
+        async function testTextureLoading() {
+            log('Testing texture loading with CORS...', 'info');
+            updateStatus('Testing texture loading...', 'info');
+            
+            try {
+                const textureUrl = 'https://cdn.jsdelivr.net/gh/liyao1520/live2d-motionSync/examples/public/models/kei_vowels_pro/kei_vowels_pro.2048/texture_00.png';
+                
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.crossOrigin = 'anonymous';
+                    
+                    img.onload = () => {
+                        log(`✅ Texture loaded successfully! Size: ${img.width}x${img.height}`, 'success');
+                        updateStatus('Texture loading: SUCCESS', 'success');
+                        resolve();
+                    };
+                    
+                    img.onerror = () => {
+                        log(`❌ Texture loading failed: CORS or network error`, 'error');
+                        updateStatus('Texture loading: FAILED', 'error');
+                        reject(new Error('Texture loading failed'));
+                    };
+                    
+                    img.src = textureUrl;
+                });
+            } catch (error) {
+                log(`❌ Texture loading failed: ${error.message}`, 'error');
+                updateStatus('Texture loading: FAILED', 'error');
+            }
+        }
+
+        async function testMotionSyncLoading() {
+            log('Testing motion sync data loading...', 'info');
+            updateStatus('Testing motion sync loading...', 'info');
+            
+            try {
+                const motionSyncUrl = 'https://cdn.jsdelivr.net/gh/liyao1520/live2d-motionSync/examples/public/models/kei_vowels_pro/kei_vowels_pro.motionsync3.json';
+                const response = await fetch(motionSyncUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`✅ Motion sync data loaded successfully! Version: ${data.Version}`, 'success');
+                    updateStatus('Motion sync loading: SUCCESS', 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+            } catch (error) {
+                log(`❌ Motion sync loading failed: ${error.message}`, 'error');
+                updateStatus('Motion sync loading: FAILED', 'error');
+            }
+        }
+
+        async function testMicrophoneAccess() {
+            log('Testing microphone access...', 'info');
+            updateStatus('Testing microphone access...', 'info');
+            
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                log(`✅ Microphone access granted!`, 'success');
+                updateStatus('Microphone access: SUCCESS', 'success');
+                
+                // Stop the stream
+                stream.getTracks().forEach(track => track.stop());
+            } catch (error) {
+                log(`❌ Microphone access failed: ${error.message}`, 'error');
+                updateStatus('Microphone access: FAILED', 'error');
+            }
+        }
+
+        // Auto-run basic tests on page load
+        window.addEventListener('load', () => {
+            log('Page loaded. Ready to test CORS functionality.', 'info');
+            log('Click buttons above to test different components.', 'info');
+        });
+    </script>
+</body>
+</html> 
